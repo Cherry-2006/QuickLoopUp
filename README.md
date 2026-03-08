@@ -4,7 +4,8 @@
     <strong>A native Windows dictionary popup — the macOS "Look Up" experience, reimagined for Windows.</strong>
   </p>
   <p align="center">
-    <video src="assets/QuickLoopUpDemo.mp4" controls="controls" muted="muted" playsinline="playsinline" autoplay="autoplay" loop="loop" style="max-width: 600px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.5);"></video>
+    <img src="assets/screenshot1.png" alt="QuickLoopUp Demo 1" width="45%" style="margin-right: 2%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.5);" />
+    <img src="assets/screenshot2.png" alt="QuickLoopUp Demo 2" width="45%" style="border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.5);" />
   </p>
   <p align="center">
     <a href="#features">Features</a> •
