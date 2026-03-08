@@ -38,12 +38,12 @@ struct PopupData { int x, y; std::wstring htmlContent; };
 LRESULT CALLBACK LowLevelMouseProc(int, WPARAM, LPARAM);
 LRESULT CALLBACK LowLevelKeyboardProc(int, WPARAM, LPARAM);
 LRESULT CALLBACK PopupWindowProc(HWND, UINT, WPARAM, LPARAM);
-void ExtractTextAndSearch(int x, int y);
+void ExtractTextAndSearch(int x, int y, bool wasDragging);
 void FetchDefinitionAsync(std::wstring word, int x, int y);
 void InitializeWebView();
 void CreatePopupWindow(HINSTANCE);
 void ShowPopup(int x, int y, const std::wstring& html);
-std::wstring BackupClipboardExtraction(int x, int y);
+std::wstring BackupClipboardExtraction(int x, int y, bool wasDragging);
 
 // ── CSS ───────────────────────────────────────────────────
 static const char* CSS =
@@ -149,7 +149,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
     MSG msg;
     while (GetMessageW(&msg, NULL, 0, 0)) {
         if (msg.message == WM_APP_TRIGGER_EXTRACT) {
-            std::thread(ExtractTextAndSearch, (int)msg.wParam, (int)msg.lParam).detach();
+            bool drg = isDragging;
+            std::thread(ExtractTextAndSearch, (int)msg.wParam, (int)msg.lParam, drg).detach();
         } else if (msg.message == WM_APP_SHOW_CONTENT) {
             PopupData* p = (PopupData*)msg.lParam;
             if (p) { ShowPopup(p->x, p->y, p->htmlContent); delete p; }
@@ -264,10 +265,10 @@ LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
             if (ms->pt.x<r.left||ms->pt.x>r.right||ms->pt.y<r.top||ms->pt.y>r.bottom)
                 PostThreadMessageW(mainThreadId, WM_APP_HIDE_POPUP, 0, 0);
         }
-        if (wParam == WM_LBUTTONDOWN) { downTime=GetTickCount64(); downPos=ms->pt; isDragging=false; SetTimer(hPopupWindow,2,500,NULL); }
+        if (wParam == WM_LBUTTONDOWN) { downTime=GetTickCount64(); downPos=ms->pt; isDragging=false; SetTimer(hPopupWindow,2,800,NULL); }
         else if (wParam == WM_MOUSEMOVE && downTime) {
             double d = std::sqrt(std::pow(ms->pt.x-downPos.x,2)+std::pow(ms->pt.y-downPos.y,2));
-            if (d > 10.0) { isDragging=true; downPos=ms->pt; SetTimer(hPopupWindow,2,500,NULL); }
+            if (d > 10.0) { isDragging=true; downPos=ms->pt; SetTimer(hPopupWindow,2,800,NULL); }
         }
         else if (wParam == WM_LBUTTONUP) { downTime=0; isDragging=false; KillTimer(hPopupWindow,2); }
     }
@@ -275,7 +276,7 @@ LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
 }
 
 // ── Clipboard fallback ────────────────────────────────────
-std::wstring BackupClipboardExtraction(int x, int y) {
+std::wstring BackupClipboardExtraction(int x, int y, bool wasDragging) {
     HWND hw = GetDesktopWindow();
     std::wstring oldClip;
     if (OpenClipboard(hw)) { HANDLE h=GetClipboardData(CF_UNICODETEXT); if(h){auto*p=(wchar_t*)GlobalLock(h);if(p)oldClip=p;GlobalUnlock(h);} CloseClipboard(); }
@@ -291,7 +292,7 @@ std::wstring BackupClipboardExtraction(int x, int y) {
     std::wstring txt;
     if (OpenClipboard(hw)) { HANDLE h=GetClipboardData(CF_UNICODETEXT); if(h){auto*p=(wchar_t*)GlobalLock(h);if(p)txt=p;GlobalUnlock(h);} CloseClipboard(); }
 
-    if (txt.empty()) {
+    if (txt.empty() && !wasDragging) {
         bool isText = false;
         IUIAutomation* a=NULL; POINT pt={x,y};
         if (SUCCEEDED(CoCreateInstance(__uuidof(CUIAutomation),NULL,CLSCTX_INPROC_SERVER,__uuidof(IUIAutomation),(void**)&a)) && a) {
@@ -321,7 +322,7 @@ std::wstring BackupClipboardExtraction(int x, int y) {
 }
 
 // ── Text extraction ───────────────────────────────────────
-void ExtractTextAndSearch(int x, int y) {
+void ExtractTextAndSearch(int x, int y, bool wasDragging) {
     if (!isWebViewReady) return;
     bool ok = false; std::wstring word;
     HRESULT hr = CoInitialize(NULL);
@@ -347,7 +348,7 @@ void ExtractTextAndSearch(int x, int y) {
         } au->Release();
     } CoUninitialize();
 
-    if (!ok || word.empty()) word = BackupClipboardExtraction(x, y);
+    if (!ok || word.empty()) word = BackupClipboardExtraction(x, y, wasDragging);
     while (!word.empty() && iswspace(word.back())) word.pop_back();
     while (!word.empty() && iswspace(word.front())) word.erase(word.begin());
     if (!word.empty()) {
@@ -449,7 +450,7 @@ LRESULT CALLBACK PopupWindowProc(HWND hw, UINT msg, WPARAM wp, LPARAM lp) {
     case WM_SIZE: if(webViewController){RECT b;GetClientRect(hw,&b);webViewController->put_Bounds(b);} return 0;
     case WM_TIMER:
         if(wp==1){ShowWindow(hw,SW_HIDE);popupVisible=false;KillTimer(hw,1);}
-        else if(wp==2){KillTimer(hw,2);if(!isDragging&&!popupVisible)PostThreadMessageW(mainThreadId,WM_APP_TRIGGER_EXTRACT,downPos.x,downPos.y);}
+        else if(wp==2){KillTimer(hw,2);if(!popupVisible)PostThreadMessageW(mainThreadId,WM_APP_TRIGGER_EXTRACT,downPos.x,downPos.y);}
         return 0;
     case WM_NCHITTEST: return HTCLIENT;
     } return DefWindowProc(hw,msg,wp,lp);

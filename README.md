@@ -4,6 +4,9 @@
     <strong>A native Windows dictionary popup — the macOS "Look Up" experience, reimagined for Windows.</strong>
   </p>
   <p align="center">
+    <video src="assets/demo.mp4" controls="controls" muted="muted" playsinline="playsinline" autoplay="autoplay" loop="loop" style="max-width: 600px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.5);"></video>
+  </p>
+  <p align="center">
     <a href="#features">Features</a> •
     <a href="#how-it-works">How It Works</a> •
     <a href="#building-from-source">Build</a> •
@@ -22,7 +25,7 @@ Built entirely in **C++** with raw **Win32 APIs**, **WebView2**, and **DWM** —
 
 | Feature | Description |
 |---------|-------------|
-| **500ms Long-Click Trigger** | Hold the mouse on any word for half a second to look it up — fast and unobtrusive |
+| **800ms Long-Click Trigger** | Hold the mouse on any word for ~0.8 seconds to look it up — fast and unobtrusive |
 | **Universal Text Extraction** | Uses **UI Automation** (`IUIAutomationTextPattern`) to extract text from Chromium, native, and Electron apps |
 | **Smart Clipboard Fallback** | Falls back to `Ctrl+C` simulation for legacy apps, with element-type safety checks to avoid triggering buttons |
 | **Drag-Aware** | Tracks dragging state so text selections are never interrupted by false triggers |
@@ -39,7 +42,7 @@ Built entirely in **C++** with raw **Win32 APIs**, **WebView2**, and **DWM** —
  ┌─────────────────┐     ┌──────────────────┐     ┌───────────────────┐
  │  WH_MOUSE_LL    │────▶│  UI Automation   │────▶│  Dictionary API   │
  │  Global Hook    │     │  Text Extraction  │     │  (dictionaryapi)  │
- │  (500ms hold)   │     │  + Clipboard      │     │  + Google Search  │
+ │  (800ms hold)   │     │  + Clipboard      │     │  + Google Search  │
  └─────────────────┘     └──────────────────┘     └───────────────────┘
                                                            │
                                                            ▼
@@ -50,7 +53,7 @@ Built entirely in **C++** with raw **Win32 APIs**, **WebView2**, and **DWM** —
                                                   └───────────────────┘
 ```
 
-1. **Global Hook** — `WH_MOUSE_LL` + `WH_KEYBOARD_LL` detect 500ms long-press and dismiss events across all apps.
+1. **Global Hook** — `WH_MOUSE_LL` + `WH_KEYBOARD_LL` detect 800ms long-press and dismiss events across all apps.
 2. **Text Extraction** — Background thread uses `ElementFromPoint` → `TextPattern::GetSelection` or `RangeFromPoint` → `ExpandToEnclosingUnit(TextUnit_Word)`. Falls back to clipboard with element-type safety.
 3. **Dictionary Fetch** — Persistent `WinHTTP` session queries `api.dictionaryapi.dev`. On 404 or failure, redirects to Google Search.
 4. **Rendering** — Stripped-down WebView2 renders dynamically-generated HTML/CSS. V8 pre-warmed on startup; DOM memory reclaimed on dismiss.
@@ -76,8 +79,8 @@ Run the **Uninstall QuickLoopUp** shortcut from the Start Menu, or uninstall it 
 ## Usage
 
 1. **Launch** — Run `QuickLoopUp.exe` or restart your PC (it auto-starts). No tray icon — it runs silently.
-2. **Look up a word** — In any app, hold the left mouse button on a word for ~0.5s.
-3. **Look up a phrase** — Select text first, then long-click. Multi-word selections open Google Search.
+2. **Look up a word** — In any app, hold the left mouse button on a word for ~0.8s.
+3. **Look up a phrase** — Highlight a phrase and long-click, or simply **drag to select and hold** for ~0.8s at the end of your drag. Multi-word selections open Google Search.
 4. **Dismiss** — Click outside the popup, press any key, or press `Esc`.
 5. **Exit** — End the process via Task Manager.
 
@@ -85,7 +88,7 @@ Run the **Uninstall QuickLoopUp** shortcut from the Start Menu, or uninstall it 
 
 | Metric | Value |
 |--------|-------|
-| Trigger delay | 500ms long-press |
+| Trigger delay | 800ms long-press |
 | API timeout | 3s connect / 5s receive |
 | Clipboard fallback | 30–40ms sleep |
 | Idle RAM | < 15 MB |
