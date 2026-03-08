@@ -31,7 +31,7 @@ Built entirely in **C++** with raw **Win32 APIs**, **WebView2**, and **DWM** —
 | **Smart Clipboard Fallback** | Falls back to `Ctrl+C` simulation for legacy apps, with element-type safety checks to avoid triggering buttons |
 | **Drag-Aware** | Tracks dragging state so text selections are never interrupted by false triggers |
 | **Persistent HTTP** | Single `WinHTTP` session with aggressive timeouts (3s connect, 5s receive), reused across all lookups |
-| **~15 MB Idle RAM** | Chromium forced into single-process mode; V8 memory reclaimed on popup dismiss |
+| **~75 MB Idle RAM** | Chromium forced into single-process mode; V8 memory reclaimed on popup dismiss |
 | **DWM Rounded Corners** | Native OS-level rounded corners via `DwmSetWindowAttribute` (Windows 11+) |
 | **Subtle Box Shadow** | DWM frame extension provides a clean elevation shadow separating popup from desktop |
 | **Safe JSON Parsing** | Recursive-descent string extraction — handles escapes, nesting, and edge cases |
@@ -92,7 +92,7 @@ Run the **Uninstall QuickLoopUp** shortcut from the Start Menu, or uninstall it 
 | Trigger delay | 800ms long-press |
 | API timeout | 3s connect / 5s receive |
 | Clipboard fallback | 30–40ms sleep |
-| Idle RAM | < 15 MB |
+| Idle RAM | < 75 MB |
 | HTTP session | Persistent (reused) |
 | Binary size | ~1 MB (statically linked, DLL embedded) |
 
