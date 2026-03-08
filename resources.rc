@@ -1,0 +1,2 @@
+#define IDR_WEBVIEW2_DLL 101
+IDR_WEBVIEW2_DLL RCDATA "WebView2Loader.dll"
